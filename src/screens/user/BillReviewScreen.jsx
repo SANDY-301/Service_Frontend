@@ -1,95 +1,113 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { COLORS } from '../../theme/theme';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SHADOWS, RADIUS, TYPOGRAPHY } from '../../theme/theme';
 import Header from '../../components/Header';
-import StatusBadge from '../../components/StatusBadge';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BillReviewScreen = ({ route, navigation }) => {
-  const { categoryId, categoryName, product, problem, company, bill } = route.params;
-
-  const parsed = bill?.parsedOcrData || {};
-
+  const { categoryId, categoryName, product, problem, company, billImage, ocrData } = route.params;
+  const insets = useSafeAreaInsets();
+  
+  // Simulated parsing logic based on dummy OCR data response
+  const isDateValid = ocrData?.purchaseDate !== null;
+  const isModelMatch = ocrData?.modelMatch || false;
+  
   const handleProceed = () => {
+    // Determine warranty result directly here instead of calling backend again just to calculate dates
+    const currentDate = new Date();
+    const purchaseDate = isDateValid ? new Date(ocrData.purchaseDate) : null;
+    let status = 'OUT_OF_WARRANTY';
+    
+    if (purchaseDate) {
+      const warrantyEndDate = new Date(purchaseDate);
+      warrantyEndDate.setMonth(warrantyEndDate.getMonth() + (product?.warrantyPeriodMonths || 12));
+      
+      if (currentDate <= warrantyEndDate) {
+        status = 'VALID';
+      }
+    }
+
     navigation.navigate('WarrantyResult', {
-      categoryId,
-      categoryName,
-      product,
-      problem,
-      company,
-      bill,
+      categoryId, categoryName, product, problem, company, billImage,
+      billScanResult: {
+        status,
+        ocrData,
+        message: status === 'VALID' ? 'Your appliance is actively under warranty!' : 'The warranty period has expired based on the bill date.',
+      },
     });
   };
 
   return (
     <View style={styles.container}>
-      <Header title="OCR Bill Details" showBack onBack={() => navigation.goBack()} />
+      <Header title="Scan Results" showBack onBack={() => navigation.goBack()} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Step 6: Review OCR Extracted Bill Data</Text>
-        <Text style={styles.subtitle}>
-          Below is the extracted information parsed locally by Tesseract OCR
-        </Text>
-
-        {/* STATUS BADGE CARD */}
-        <View style={styles.statusCard}>
-          <Text style={styles.statusLabel}>Bill Verification Status:</Text>
-          <StatusBadge status={bill.verificationStatus || 'PENDING'} />
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + insets.bottom }]} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerArea}>
+          <Text style={styles.title}>Step 5: Review AI Extraction</Text>
+          <Text style={styles.subtitle}>Our AI has extracted the following details from your bill.</Text>
         </View>
 
-        {/* PARSED DATA TABLE */}
-        <View style={styles.tableCard}>
-          <Text style={styles.tableTitle}>Extracted Bill Details</Text>
-
-          <View style={styles.row}>
-            <Text style={styles.key}>Invoice / Bill No:</Text>
-            <Text style={styles.val}>{parsed.invoiceNumber || 'N/A'}</Text>
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="document-text" size={20} color={COLORS.primary} />
+            <Text style={styles.cardTitle}>Extracted Bill Details</Text>
           </View>
 
-          <View style={styles.row}>
-            <Text style={styles.key}>Purchase Date:</Text>
-            <Text style={styles.val}>{parsed.purchaseDate || '10/01/2026'}</Text>
+          <View style={styles.dataRow}>
+            <Text style={styles.dataLabel}>Brand Detected:</Text>
+            <Text style={styles.dataValue}>{ocrData?.brand || 'Unknown'}</Text>
+          </View>
+          <View style={styles.dataRow}>
+            <Text style={styles.dataLabel}>Purchase Date:</Text>
+            <Text style={styles.dataValue}>{ocrData?.purchaseDate || 'Not detected'}</Text>
+          </View>
+          <View style={styles.dataRow}>
+            <Text style={styles.dataLabel}>Model Confidence:</Text>
+            <Text style={styles.dataValue}>{ocrData?.confidence || 'N/A'}</Text>
           </View>
 
-          <View style={styles.row}>
-            <Text style={styles.key}>Customer Name:</Text>
-            <Text style={styles.val}>{parsed.customerName || 'Customer'}</Text>
-          </View>
+          <View style={styles.validationBox}>
+            {isDateValid ? (
+              <View style={styles.validRow}>
+                <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                <Text style={styles.validText}>Valid purchase date detected</Text>
+              </View>
+            ) : (
+              <View style={styles.invalidRow}>
+                <Ionicons name="close-circle" size={16} color={COLORS.danger} />
+                <Text style={styles.invalidText}>Could not detect purchase date</Text>
+              </View>
+            )}
 
-          <View style={styles.row}>
-            <Text style={styles.key}>Brand / Model:</Text>
-            <Text style={styles.val}>{parsed.brand || product?.brand || 'Standard'} {parsed.modelNumber || product?.modelNumber || ''}</Text>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.key}>Total Amount:</Text>
-            <Text style={styles.val}>₹{parsed.totalAmount || '42,500'}</Text>
+            {isModelMatch ? (
+              <View style={styles.validRow}>
+                <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                <Text style={styles.validText}>Model matches selected product</Text>
+              </View>
+            ) : (
+              <View style={styles.invalidRow}>
+                <Ionicons name="warning" size={16} color={COLORS.warning} />
+                <Text style={styles.invalidText}>Model mismatch or not clearly visible</Text>
+              </View>
+            )}
           </View>
         </View>
 
-        {/* RAW OCR TEXT BOX */}
-        <View style={styles.ocrCard}>
-          <Text style={styles.ocrTitle}>Raw OCR Extracted Text</Text>
-          <Text style={styles.ocrText}>
-            {bill.rawOcrText || 'Invoice No: SAT-2026-9482\nDate: 10/01/2026\nSamsung Split AC'}
+        <View style={styles.infoBox}>
+          <Ionicons name="information-circle" size={20} color={COLORS.textSecondary} />
+          <Text style={styles.infoText}>
+            If these details look incorrect, please go back and upload a clearer image of your bill.
           </Text>
         </View>
-
-        <View style={styles.noteBox}>
-          <Text style={styles.noteText}>
-            💡 Note: Store Admin will perform final verification of bill image against OCR output.
-          </Text>
-        </View>
-
-        <TouchableOpacity style={styles.proceedBtn} onPress={handleProceed}>
-          <Text style={styles.proceedBtnText}>Continue to Warranty Check →</Text>
-        </TouchableOpacity>
       </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom || 16 }]}>
+        <TouchableOpacity style={styles.proceedBtn} onPress={handleProceed} activeOpacity={0.85}>
+          <Text style={styles.proceedBtnText}>Check Warranty Eligibility</Text>
+          <Ionicons name="arrow-forward" size={18} color={COLORS.white} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -97,62 +115,45 @@ const BillReviewScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollContent: { padding: 16 },
-  title: { fontSize: 18, fontWeight: '800', color: COLORS.white, marginBottom: 4 },
-  subtitle: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 16 },
-  statusCard: {
+  headerArea: { marginBottom: 20 },
+  title: { ...TYPOGRAPHY.heading2, color: COLORS.text, marginBottom: 4 },
+  subtitle: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+
+  card: {
     backgroundColor: COLORS.card,
-    borderRadius: 12,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
-    marginBottom: 14,
-  },
-  statusLabel: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
-  tableCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 14,
+    borderRadius: RADIUS.lg,
     padding: 16,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
-    marginBottom: 14,
-  },
-  tableTitle: { fontSize: 15, fontWeight: '700', color: COLORS.white, marginBottom: 12 },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#0F172A',
-  },
-  key: { fontSize: 13, color: COLORS.textSecondary },
-  val: { fontSize: 13, color: COLORS.white, fontWeight: '700' },
-  ocrCard: {
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
-    marginBottom: 14,
-  },
-  ocrTitle: { fontSize: 12, fontWeight: '700', color: COLORS.textMuted, marginBottom: 6 },
-  ocrText: { fontSize: 11, color: COLORS.textSecondary, fontFamily: 'monospace' },
-  noteBox: {
-    backgroundColor: COLORS.warningBg,
-    borderRadius: 10,
-    padding: 12,
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: COLORS.warning,
+    ...SHADOWS.small,
   },
-  noteText: { fontSize: 12, color: COLORS.warning },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.divider, paddingBottom: 12 },
+  cardTitle: { fontSize: 16, fontWeight: '800', color: COLORS.text },
+
+  dataRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  dataLabel: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
+  dataValue: { fontSize: 14, color: COLORS.text, fontWeight: '700' },
+
+  validationBox: { backgroundColor: COLORS.surface, padding: 12, borderRadius: RADIUS.md, marginTop: 8 },
+  validRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  validText: { fontSize: 13, color: COLORS.success, fontWeight: '600' },
+  invalidRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  invalidText: { fontSize: 13, color: COLORS.text, fontWeight: '500' },
+
+  infoBox: { flexDirection: 'row', padding: 16, backgroundColor: COLORS.surface, borderRadius: RADIUS.md },
+  infoText: { flex: 1, fontSize: 12, color: COLORS.textSecondary, marginLeft: 12, lineHeight: 18 },
+
+  footer: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: COLORS.card,
+    paddingTop: 16, paddingHorizontal: 16,
+    borderTopWidth: 1, borderTopColor: COLORS.cardBorder,
+    ...SHADOWS.medium,
+  },
   proceedBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: RADIUS.md,
   },
   proceedBtnText: { color: COLORS.white, fontSize: 16, fontWeight: '800' },
 });

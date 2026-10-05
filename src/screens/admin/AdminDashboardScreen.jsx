@@ -11,7 +11,7 @@ import Header from '../../components/Header';
 
 const STAT_CARDS = [
   { key: 'pendingBills',     label: 'Pending Bills',      icon: 'document-text-outline',   color: COLORS.warningLight,   screen: 'AdminBillVerification', alert: true },
-  { key: 'todaysBookings',   label: "Today's Bookings",   icon: 'calendar-outline',         color: COLORS.primaryLight,   screen: 'AdminBookings' },
+  { key: 'activeBookings',   label: "Active Bookings",   icon: 'calendar-outline',         color: COLORS.primaryLight,   screen: 'AdminBookings' },
   { key: 'totalProducts',    label: 'Products Listed',    icon: 'cube-outline',             color: COLORS.accentLight,    screen: 'AdminProducts' },
   { key: 'activeWarranties', label: 'Active Warranties',  icon: 'shield-checkmark-outline', color: COLORS.successLight },
   { key: 'totalUsers',       label: 'Registered Users',   icon: 'people-outline',           color: COLORS.infoLight },
@@ -33,7 +33,7 @@ const AdminDashboardScreen = ({ navigation }) => {
       setStats(res.data);
     } catch (e) {
       console.error(e);
-      setStats({ pendingBills: 0, todaysBookings: 0, totalProducts: 0, activeWarranties: 0, totalUsers: 0, totalProviders: 0 });
+      setStats({ pendingBills: 0, activeBookings: 0, totalProducts: 0, activeWarranties: 0, totalUsers: 0, totalProviders: 0 });
     } finally {
       setLoading(false);
     }
@@ -46,7 +46,9 @@ const AdminDashboardScreen = ({ navigation }) => {
   };
 
   const ACTIONS = [
-    { screen: 'AdminBillVerification', icon: 'document-text-outline', title: 'Bill Verification',       sub: 'Review uploaded receipts & verify warranty claims' },
+    { screen: 'AdminAddCategory',      icon: 'add-circle-outline',     title: 'Add Appliance Category',   sub: 'Add new categories to the main database' },
+    { screen: 'AdminAddFault',         icon: 'construct-outline',      title: 'Add Service Fault',        sub: 'Add specific problems for technician rates' },
+    { screen: 'AdminBillVerification', icon: 'document-text-outline',  title: 'Bill Verification',       sub: 'Review uploaded receipts & verify warranty claims' },
     { screen: 'AdminProducts',         icon: 'cube-outline',           title: 'Products & Warranty Rules', sub: 'Add models, set service charges & labour costs' },
     { screen: 'AdminSlots',            icon: 'time-outline',           title: 'Slot Configuration',       sub: 'Set daily booking capacity — morning & evening' },
     { screen: 'AdminBookings',         icon: 'list-outline',           title: 'All Bookings',             sub: 'View & update status of all service bookings' },

@@ -1,130 +1,89 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { COLORS } from '../../theme/theme';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SHADOWS, RADIUS, TYPOGRAPHY } from '../../theme/theme';
 import Header from '../../components/Header';
-import PriceBreakdownCard from '../../components/PriceBreakdownCard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ServiceOptionsScreen = ({ route, navigation }) => {
-  const { categoryId, categoryName, product, problem, company, bill, warrantyData } = route.params;
+  const { categoryId, categoryName, product, problem, company, billImage, billScanResult } = route.params;
+  const isWarrantyValid = billScanResult?.status === 'VALID';
+  const insets = useSafeAreaInsets();
 
-  const isWarrantyActive = warrantyData?.warrantyStatus === 'ACTIVE' || warrantyData?.isWarrantyActive;
-
-  const companyServiceCharge = product?.companyServiceCharge || 600;
-  const companyLabourCharge = product?.labourCharge || 350;
-
-  const handleSelectCompanyService = () => {
-    navigation.navigate('PriceBreakdown', {
-      categoryId,
-      categoryName,
-      product,
-      problem,
-      company,
-      bill,
-      warrantyData,
-      serviceType: isWarrantyActive ? 'COMPANY_WARRANTY' : 'COMPANY_PAID',
-      serviceCharge: companyServiceCharge,
-      warrantyDiscount: isWarrantyActive ? companyServiceCharge : 0,
-      labourCharge: companyLabourCharge,
-      provider: null,
-    });
-  };
-
-  const handleSelectLocalProvider = () => {
-    navigation.navigate('LocalProviderList', {
-      categoryId,
-      categoryName,
-      product,
-      problem,
-      company,
-      bill,
-      warrantyData,
-    });
+  const handleSelectOption = (isAuthorized) => {
+    if (isAuthorized) {
+      navigation.navigate('DateSlotSelection', {
+        categoryId, categoryName, product, problem, company, billImage, billScanResult,
+        providerType: 'AUTHORIZED',
+      });
+    } else {
+      navigation.navigate('LocalProviderList', {
+        categoryId, categoryName, product, problem, company, billImage, billScanResult,
+        providerType: 'LOCAL',
+      });
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Header title="Service Options" showBack onBack={() => navigation.goBack()} />
+      <Header title="Service Option" showBack onBack={() => navigation.goBack()} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Step 8: Choose Service Option</Text>
-        <Text style={styles.subtitle}>
-          {isWarrantyActive
-            ? 'Your appliance is covered under active warranty. Select authorized company service.'
-            : 'Warranty is expired. Compare authorized store service vs vetted local providers.'}
-        </Text>
-
-        {/* OPTION 1: AUTHORIZED COMPANY SERVICE */}
-        <View style={[styles.optionCard, isWarrantyActive && styles.activeWarrantyBorder]}>
-          <View style={styles.optionHeader}>
-            <View style={styles.optionBadge}>
-              <Text style={styles.optionBadgeText}>OPTION 1: AUTHORIZED COMPANY SERVICE</Text>
-            </View>
-            {isWarrantyActive ? (
-              <Text style={styles.warrantyCoveredTag}>🛡️ COVERED BY WARRANTY</Text>
-            ) : null}
-          </View>
-
-          <Text style={styles.companyName}>
-            {company?.companyName || 'Sathya Authorized Brand Service'}
-          </Text>
-          <Text style={styles.optionDesc}>
-            Official company-certified technicians, genuine manufacturer spare parts, full warranty compliance.
-          </Text>
-
-          <PriceBreakdownCard
-            baseServiceCharge={companyServiceCharge}
-            warrantyDiscount={isWarrantyActive ? companyServiceCharge : 0}
-            labourCharge={companyLabourCharge}
-            finalAmount={
-              Math.max(0, companyServiceCharge - (isWarrantyActive ? companyServiceCharge : 0)) +
-              companyLabourCharge
-            }
-            isWarrantyActive={isWarrantyActive}
-            title="Company Service Pricing"
-          />
-
-          <TouchableOpacity style={styles.selectBtn} onPress={handleSelectCompanyService}>
-            <Text style={styles.selectBtnText}>
-              {isWarrantyActive ? 'Book Company Warranty Service →' : 'Book Company Paid Service →'}
-            </Text>
-          </TouchableOpacity>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 + insets.bottom }]} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerArea}>
+          <Text style={styles.title}>Step 5: How would you like to proceed?</Text>
+          <Text style={styles.subtitle}>Choose between your brand's authorized service center or a local verified technician.</Text>
         </View>
 
-        {/* OPTION 2: LOCAL SERVICE PROVIDERS (ALWAYS SHOWN OR WHEN EXPIRED/CHOICE NEEDED) */}
-        <View style={styles.optionCard}>
-          <View style={styles.optionHeader}>
-            <View style={[styles.optionBadge, { backgroundColor: COLORS.info }]}>
-              <Text style={styles.optionBadgeText}>OPTION 2: LOCAL SERVICE PROVIDER</Text>
+        {isWarrantyValid && (
+          <View style={styles.warrantyAlert}>
+            <Ionicons name="shield-checkmark" size={24} color={COLORS.white} />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.alertTitle}>Active Warranty Detected!</Text>
+              <Text style={styles.alertText}>Your appliance is under warranty. Booking an authorized center covers part replacement costs.</Text>
             </View>
           </View>
+        )}
 
-          <Text style={styles.companyName}>Vetted Local Technicians</Text>
-          <Text style={styles.optionDesc}>
-            Independent certified technicians in your city offering competitive pricing, quick turnaround & direct contact.
-          </Text>
-
-          <View style={styles.localPricePreview}>
-            <Text style={styles.localPriceTitle}>Typical Local Technician Rates:</Text>
-            <Text style={styles.localPriceSub}>
-              Service Charge: ~₹350 - ₹450 | Labour: ~₹150 - ₹200
-            </Text>
+        <TouchableOpacity style={styles.optionCard} onPress={() => handleSelectOption(true)} activeOpacity={0.8}>
+          <View style={[styles.cardHeader, { backgroundColor: COLORS.primaryGhost }]}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="shield-checkmark" size={28} color={COLORS.primary} />
+            </View>
+            <View style={{ marginLeft: 16 }}>
+              <Text style={styles.optionTitle}>Authorized Brand Center</Text>
+              <Text style={styles.optionTag}>Recommended</Text>
+            </View>
           </View>
+          <View style={styles.cardBody}>
+            <Text style={styles.bullet}>• Authentic OEM spare parts guaranteed</Text>
+            <Text style={styles.bullet}>• Eligible for zero-cost repairs if in warranty</Text>
+            <Text style={styles.bullet}>• Brand-certified technicians</Text>
+            <View style={styles.pricingRow}>
+              <Text style={styles.pricingText}>Base Visit Fee: ₹{product.companyServiceCharge || 500}</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.selectBtn, { backgroundColor: '#0F172A', borderWidth: 1, borderColor: COLORS.primary }]}
-            onPress={handleSelectLocalProvider}
-          >
-            <Text style={[styles.selectBtnText, { color: COLORS.text }]}>
-              Browse Local Providers for {problem?.problemName || categoryName} →
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.optionCard} onPress={() => handleSelectOption(false)} activeOpacity={0.8}>
+          <View style={[styles.cardHeader, { backgroundColor: COLORS.surface }]}>
+            <View style={[styles.iconCircle, { backgroundColor: COLORS.background }]}>
+              <Ionicons name="construct" size={28} color={COLORS.textSecondary} />
+            </View>
+            <View style={{ marginLeft: 16 }}>
+              <Text style={[styles.optionTitle, { color: COLORS.text }]}>Local Verified Technician</Text>
+              <Text style={[styles.optionTag, { backgroundColor: COLORS.divider, color: COLORS.textSecondary }]}>Cost Effective</Text>
+            </View>
+          </View>
+          <View style={styles.cardBody}>
+            <Text style={styles.bullet}>• Usually faster same-day response</Text>
+            <Text style={styles.bullet}>• Competitive third-party repair rates</Text>
+            <Text style={styles.bullet}>• Warranty coverage will NOT apply</Text>
+            <View style={styles.pricingRow}>
+              <Text style={styles.pricingText}>Base Visit Fee: Varies by technician</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
       </ScrollView>
     </View>
   );
@@ -133,51 +92,40 @@ const ServiceOptionsScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollContent: { padding: 16 },
-  title: { fontSize: 18, fontWeight: '800', color: COLORS.white, marginBottom: 4 },
-  subtitle: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 16 },
+  headerArea: { marginBottom: 20 },
+  title: { ...TYPOGRAPHY.heading2, color: COLORS.text, marginBottom: 4 },
+  subtitle: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+
+  warrantyAlert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.success,
+    padding: 16,
+    borderRadius: RADIUS.lg,
+    marginBottom: 20,
+    ...SHADOWS.small,
+  },
+  alertTitle: { fontSize: 15, fontWeight: '800', color: COLORS.white, marginBottom: 2 },
+  alertText: { fontSize: 12, color: COLORS.white, opacity: 0.9, lineHeight: 18 },
+
   optionCard: {
     backgroundColor: COLORS.card,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
-    marginBottom: 16,
+    marginBottom: 20,
+    overflow: 'hidden',
+    ...SHADOWS.small,
   },
-  activeWarrantyBorder: {
-    borderColor: COLORS.success,
-  },
-  optionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  optionBadge: {
-    backgroundColor: COLORS.primaryDark,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  optionBadgeText: { fontSize: 10, fontWeight: '800', color: COLORS.white },
-  warrantyCoveredTag: { fontSize: 11, fontWeight: '800', color: COLORS.success },
-  companyName: { fontSize: 16, fontWeight: '800', color: COLORS.white, marginTop: 4 },
-  optionDesc: { fontSize: 12, color: COLORS.textSecondary, marginTop: 4, marginBottom: 10 },
-  localPricePreview: {
-    backgroundColor: '#0F172A',
-    borderRadius: 10,
-    padding: 12,
-    marginVertical: 10,
-  },
-  localPriceTitle: { fontSize: 12, fontWeight: '700', color: COLORS.white },
-  localPriceSub: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
-  selectBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  selectBtnText: { color: COLORS.white, fontSize: 14, fontWeight: '800' },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  iconCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center', ...SHADOWS.small },
+  optionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.primary, marginBottom: 4 },
+  optionTag: { alignSelf: 'flex-start', backgroundColor: COLORS.primary, color: COLORS.white, fontSize: 10, fontWeight: '800', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, textTransform: 'uppercase' },
+
+  cardBody: { padding: 16 },
+  bullet: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 8, fontWeight: '500' },
+  pricingRow: { marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORS.divider },
+  pricingText: { fontSize: 14, fontWeight: '700', color: COLORS.text },
 });
 
 export default ServiceOptionsScreen;

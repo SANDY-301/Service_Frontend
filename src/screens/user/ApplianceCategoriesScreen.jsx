@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { COLORS } from '../../theme/theme';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SHADOWS, TYPOGRAPHY, RADIUS } from '../../theme/theme';
 import apiClient from '../../api/apiClient';
 import Header from '../../components/Header';
 import CategoryCard from '../../components/CategoryCard';
@@ -9,9 +10,7 @@ const ApplianceCategoriesScreen = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   const fetchCategories = async () => {
     try {
@@ -25,45 +24,103 @@ const ApplianceCategoriesScreen = ({ navigation }) => {
     }
   };
 
+  const renderHeader = () => (
+    <View style={styles.pageHeader}>
+      <View style={styles.stepBadge}>
+        <Text style={styles.stepText}>STEP 1 OF 4</Text>
+      </View>
+      <Text style={styles.title}>Select Appliance</Text>
+      <Text style={styles.subtitle}>
+        Choose the appliance you need service for
+      </Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <Header title="Select Appliance" showBack onBack={() => navigation.goBack()} />
+      <Header title="Book Service" showBack onBack={() => navigation.goBack()} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Step 1: Choose Appliance Category</Text>
-        <Text style={styles.subtitle}>
-          Select the appliance you need company-authorized or local service for
-        </Text>
-
-        {loading ? (
-          <ActivityIndicator color={COLORS.primaryLight} style={{ marginVertical: 30 }} />
-        ) : (
-          <View style={styles.grid}>
-            {categories.map((cat) => (
-              <CategoryCard
-                key={cat._id}
-                category={cat}
-                onPress={() =>
-                  navigation.navigate('ProductSelection', {
-                    categoryId: cat._id,
-                    categoryName: cat.name,
-                  })
-                }
-              />
-            ))}
-          </View>
-        )}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator color={COLORS.primary} size="large" />
+          <Text style={styles.loadingText}>Loading categories...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={categories}
+          keyExtractor={(item) => item._id}
+          numColumns={3}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <CategoryCard
+              category={item}
+              onPress={() =>
+                navigation.navigate('ProductSelection', {
+                  categoryId: item._id,
+                  categoryName: item.name,
+                })
+              }
+            />
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyBox}>
+              <Ionicons name="cube-outline" size={48} color={COLORS.textMuted} />
+              <Text style={styles.emptyTitle}>No Categories</Text>
+              <Text style={styles.emptyText}>Categories will appear here once added.</Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  scrollContent: { padding: 16 },
-  title: { fontSize: 18, fontWeight: '800', color: COLORS.white, marginBottom: 4 },
-  subtitle: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 16 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  loadingBox: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingText: { color: COLORS.textMuted, fontSize: 14 },
+
+  listContent: { padding: 16, paddingBottom: 40 },
+
+  pageHeader: {
+    marginBottom: 20,
+  },
+  stepBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.primaryGhost,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 10,
+  },
+  stepText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.primary,
+    letterSpacing: 1,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: COLORS.text,
+    letterSpacing: -0.5,
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+
+  emptyBox: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    gap: 10,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text },
+  emptyText: { fontSize: 13, color: COLORS.textMuted, textAlign: 'center' },
 });
 
 export default ApplianceCategoriesScreen;

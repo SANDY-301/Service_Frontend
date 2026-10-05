@@ -1,24 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
+  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, FlatList,
 } from 'react-native';
-import { COLORS } from '../../theme/theme';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { COLORS, SHADOWS, RADIUS, TYPOGRAPHY } from '../../theme/theme';
 import apiClient from '../../api/apiClient';
 import Header from '../../components/Header';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ProductSelectionScreen = ({ route, navigation }) => {
   const { categoryId, categoryName } = route.params;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    fetchProducts();
-  }, [categoryId]);
+  useEffect(() => { fetchProducts(); }, [categoryId]);
 
   const fetchProducts = async () => {
     try {
@@ -40,111 +36,153 @@ const ProductSelectionScreen = ({ route, navigation }) => {
     });
   };
 
+  const renderProduct = ({ item: prod }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => handleSelectProduct(prod)}
+      activeOpacity={0.8}
+    >
+      <View style={styles.cardHeader}>
+        <View style={styles.brandBadge}>
+          <MaterialCommunityIcons name="barcode" size={12} color={COLORS.primaryLight} />
+          <Text style={styles.brandTag}>{prod.brand}</Text>
+        </View>
+        <View style={styles.warrantyBadge}>
+          <Ionicons name="shield-checkmark" size={12} color={COLORS.successLight} />
+          <Text style={styles.warrantyTag}>{prod.warrantyPeriodMonths}M Warranty</Text>
+        </View>
+      </View>
+
+      <Text style={styles.productName}>{prod.productName}</Text>
+      <Text style={styles.modelNumber}>Model: {prod.modelNumber}</Text>
+
+      <View style={styles.divider} />
+
+      <View style={styles.priceRow}>
+        <View>
+          <Text style={styles.chargeLabel}>Base Charge</Text>
+          <Text style={styles.chargeValue}>₹{prod.companyServiceCharge}</Text>
+        </View>
+        <View>
+          <Text style={styles.chargeLabel}>Labour</Text>
+          <Text style={styles.chargeValue}>₹{prod.labourCharge}</Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={styles.chargeLabel}>Authorized by</Text>
+          <Text style={styles.storeText} numberOfLines={1}>{prod.companyId?.companyName || 'Brand Store'}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const genericModelOption = {
+    _id: null,
+    productName: `Generic ${categoryName}`,
+    brand: 'Standard Model',
+    modelNumber: 'Unknown',
+    warrantyPeriodMonths: 12,
+    companyServiceCharge: 500,
+    labourCharge: 300,
+  };
+
   return (
     <View style={styles.container}>
       <Header title={`${categoryName} Models`} showBack onBack={() => navigation.goBack()} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Step 2: Select {categoryName} Model</Text>
-        <Text style={styles.subtitle}>Choose your appliance model for exact warranty rules</Text>
+      <View style={styles.headerArea}>
+        <Text style={styles.title}>Step 1: Select Model</Text>
+        <Text style={styles.subtitle}>Choose your appliance model for exact warranty rules and pricing.</Text>
+      </View>
 
-        {loading ? (
-          <ActivityIndicator color={COLORS.primaryLight} style={{ marginVertical: 30 }} />
-        ) : (
-          <>
-            {products.map((prod) => (
-              <TouchableOpacity
-                key={prod._id}
-                style={styles.card}
-                onPress={() => handleSelectProduct(prod)}
-              >
-                <View style={styles.cardHeader}>
-                  <Text style={styles.brandBadge}>{prod.brand}</Text>
-                  <Text style={styles.warrantyTag}>{prod.warrantyPeriodMonths} Months Warranty</Text>
-                </View>
-
-                <Text style={styles.productName}>{prod.productName}</Text>
-                <Text style={styles.modelNumber}>Model: {prod.modelNumber}</Text>
-
-                <View style={styles.priceRow}>
-                  <Text style={styles.chargeLabel}>Base Company Charge: ₹{prod.companyServiceCharge}</Text>
-                  <Text style={styles.labourLabel}>Labour: ₹{prod.labourCharge}</Text>
-                </View>
-
-                <View style={styles.storeRow}>
-                  <Text style={styles.storeText}>
-                    Store: {prod.companyId?.companyName || 'Authorized Dealer'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-
-            {/* Custom generic model option */}
+      {loading ? (
+        <ActivityIndicator color={COLORS.primaryLight} style={{ marginVertical: 30 }} size="large" />
+      ) : (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item._id}
+          renderItem={renderProduct}
+          contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
+          showsVerticalScrollIndicator={false}
+          ListFooterComponent={
             <TouchableOpacity
-              style={[styles.card, styles.genericCard]}
-              onPress={() =>
-                handleSelectProduct({
-                  _id: null,
-                  productName: `Generic ${categoryName}`,
-                  brand: 'Standard',
-                  modelNumber: 'N/A',
-                  warrantyPeriodMonths: 12,
-                  companyServiceCharge: 500,
-                  labourCharge: 300,
-                })
-              }
+              style={styles.genericCard}
+              onPress={() => handleSelectProduct(genericModelOption)}
+              activeOpacity={0.7}
             >
-              <Text style={styles.genericTitle}>+ My Model is Not Listed</Text>
-              <Text style={styles.genericSub}>Continue with bill upload OCR warranty verification</Text>
+              <View style={styles.genericIconWrap}>
+                <Ionicons name="add" size={24} color={COLORS.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.genericTitle}>My Model is Not Listed</Text>
+                <Text style={styles.genericSub}>Continue with bill upload OCR warranty verification</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
             </TouchableOpacity>
-          </>
-        )}
-      </ScrollView>
+          }
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  scrollContent: { padding: 16 },
-  title: { fontSize: 18, fontWeight: '800', color: COLORS.white, marginBottom: 4 },
-  subtitle: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 16 },
+  headerArea: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  title: { ...TYPOGRAPHY.heading2, color: COLORS.text, marginBottom: 4 },
+  subtitle: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 16, lineHeight: 20 },
+  listContent: { paddingHorizontal: 16 },
+
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
+    borderRadius: RADIUS.lg,
     padding: 16,
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
-    marginBottom: 12,
+    marginBottom: 16,
+    ...SHADOWS.small,
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
   brandBadge: {
-    backgroundColor: COLORS.primaryDark,
-    color: COLORS.white,
-    fontSize: 11,
-    fontWeight: '800',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: COLORS.primaryGhost,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
   },
-  warrantyTag: { color: COLORS.success, fontSize: 11, fontWeight: '700' },
-  productName: { fontSize: 15, fontWeight: '700', color: COLORS.white, marginBottom: 4 },
-  modelNumber: { fontSize: 12, color: COLORS.textSecondary, marginBottom: 10 },
-  priceRow: {
+  brandTag: { color: COLORS.primaryLight, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  warrantyBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: COLORS.successBg,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+  },
+  warrantyTag: { color: COLORS.success, fontSize: 11, fontWeight: '800' },
+  
+  productName: { ...TYPOGRAPHY.heading3, color: COLORS.text, marginBottom: 4 },
+  modelNumber: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
+
+  divider: { height: 1, backgroundColor: COLORS.divider, marginVertical: 14 },
+
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  chargeLabel: { fontSize: 11, color: COLORS.textMuted, fontWeight: '600', marginBottom: 2 },
+  chargeValue: { fontSize: 15, color: COLORS.text, fontWeight: '800' },
+  storeText: { fontSize: 13, color: COLORS.primary, fontWeight: '700' },
+
+  genericCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#0F172A',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 6,
+    alignItems: 'center',
+    backgroundColor: COLORS.primaryGhost,
+    borderRadius: RADIUS.lg,
+    padding: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: COLORS.primaryLight,
+    marginTop: 8,
   },
-  chargeLabel: { fontSize: 12, color: COLORS.text, fontWeight: '600' },
-  labourLabel: { fontSize: 12, color: COLORS.textSecondary },
-  storeRow: { marginTop: 2 },
-  storeText: { fontSize: 11, color: COLORS.textMuted },
-  genericCard: { borderColor: COLORS.primary, borderStyle: 'dashed' },
-  genericTitle: { fontSize: 15, fontWeight: '700', color: COLORS.primaryLight },
-  genericSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+  genericIconWrap: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center',
+    marginRight: 14, ...SHADOWS.small,
+  },
+  genericTitle: { fontSize: 15, fontWeight: '800', color: COLORS.primary, marginBottom: 2 },
+  genericSub: { fontSize: 12, color: COLORS.textSecondary, lineHeight: 18, paddingRight: 10 },
 });
 
 export default ProductSelectionScreen;

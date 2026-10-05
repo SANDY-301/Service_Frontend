@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TextInput,
   TouchableOpacity, ActivityIndicator, Alert,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/theme';
 import apiClient from '../../api/apiClient';
@@ -83,7 +84,11 @@ const AdminSlotsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Header title="Slot Configuration" showBack onBack={() => navigation.goBack()} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scrollContent}
+        enableOnAndroid={true}
+        extraScrollHeight={20}
+      >
         <Text style={styles.title}>Daily Slot Limits</Text>
         <Text style={styles.subtitle}>Control the maximum bookings allowed per time slot to prevent scheduling conflicts</Text>
 
@@ -130,7 +135,7 @@ const AdminSlotsScreen = ({ navigation }) => {
             </>
           )}
         </TouchableOpacity>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 };

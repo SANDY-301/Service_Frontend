@@ -38,6 +38,8 @@ import AdminBillVerificationScreen from '../screens/admin/AdminBillVerificationS
 import AdminBookingsScreen from '../screens/admin/AdminBookingsScreen';
 import AdminSlotsScreen from '../screens/admin/AdminSlotsScreen';
 import AdminProductsScreen from '../screens/admin/AdminProductsScreen';
+import AdminAddCategoryScreen from '../screens/admin/AdminAddCategoryScreen';
+import AdminAddFaultScreen from '../screens/admin/AdminAddFaultScreen';
 
 const Stack = createStackNavigator();
 
@@ -76,6 +78,8 @@ export default function AppNavigator() {
             <Stack.Screen name="AdminBookings" component={AdminBookingsScreen} />
             <Stack.Screen name="AdminSlots" component={AdminSlotsScreen} />
             <Stack.Screen name="AdminProducts" component={AdminProductsScreen} />
+            <Stack.Screen name="AdminAddCategory" component={AdminAddCategoryScreen} />
+            <Stack.Screen name="AdminAddFault" component={AdminAddFaultScreen} />
           </>
         ) : user?.role === 'PROVIDER' ? (
           // Provider Flow

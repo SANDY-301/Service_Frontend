@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../theme/theme';
 import { AuthContext } from '../context/AuthContext';
@@ -11,7 +12,7 @@ const Header = ({ title, showBack = false, onBack, subtitle }) => {
     switch (role) {
       case 'ADMIN': return COLORS.warning;
       case 'PROVIDER': return COLORS.success;
-      default: return COLORS.primaryLight;
+      default: return COLORS.primary;
     }
   };
 
@@ -24,13 +25,13 @@ const Header = ({ title, showBack = false, onBack, subtitle }) => {
   };
 
   return (
-    <>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.surface} />
+    <SafeAreaView edges={['top']} style={{ backgroundColor: COLORS.surface }}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.surface} />
       <View style={styles.header}>
         <View style={styles.leftSection}>
           {showBack ? (
             <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
-              <Ionicons name="arrow-back" size={22} color={COLORS.primaryLight} />
+              <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
             </TouchableOpacity>
           ) : null}
           <View>
@@ -41,24 +42,24 @@ const Header = ({ title, showBack = false, onBack, subtitle }) => {
 
         {user ? (
           <View style={styles.rightSection}>
-            <View style={[styles.roleChip, { borderColor: getRoleColor(user.role) }]}>
+            <View style={[styles.roleChip, { borderColor: getRoleColor(user.role) + '50', backgroundColor: getRoleColor(user.role) + '10' }]}>
               <Text style={[styles.roleText, { color: getRoleColor(user.role) }]}>
                 {getRoleLabel(user.role)}
               </Text>
             </View>
             <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.7}>
-              <MaterialIcons name="logout" size={18} color={COLORS.textSecondary} />
+              <MaterialIcons name="logout" size={20} color={COLORS.danger} />
             </TouchableOpacity>
           </View>
         ) : null}
       </View>
-    </>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   header: {
-    height: 58,
+    height: 60,
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.cardBorder,
@@ -104,11 +105,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   logoutBtn: {
-    padding: 6,
-    borderRadius: 8,
-    backgroundColor: COLORS.card,
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.dangerBg || '#FFEBEB',
   },
 });
 

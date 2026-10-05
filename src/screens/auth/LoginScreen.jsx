@@ -1,8 +1,10 @@
 import React, { useState, useContext } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, ScrollView, StatusBar,
+  ActivityIndicator, StatusBar, Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/theme';
 import { AuthContext } from '../../context/AuthContext';
@@ -29,110 +31,115 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 0}
+        showsVerticalScrollIndicator={false}
+      >
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-      {/* BRAND HEADER */}
-      <View style={styles.brandSection}>
-        <View style={styles.logoWrap}>
-          <MaterialCommunityIcons name="home-modern" size={36} color={COLORS.primaryLight} />
-        </View>
-        <Text style={styles.appName}>Homecare Service Hub</Text>
-        <Text style={styles.appTagline}>Authorized Appliance Repairs & Warranty</Text>
-      </View>
-
-      {/* LOGIN CARD */}
-      <View style={styles.card}>
-        <Text style={styles.cardHeading}>Sign In</Text>
-        <Text style={styles.cardSub}>Use your registered credentials to continue</Text>
-
-        {errorMsg ? (
-          <View style={styles.errorBox}>
-            <Ionicons name="warning-outline" size={14} color={COLORS.dangerLight} />
-            <Text style={styles.errorText}>{errorMsg}</Text>
+        {/* BRAND HEADER */}
+        <View style={styles.brandSection}>
+          <View style={styles.logoWrap}>
+            <MaterialCommunityIcons name="home-modern" size={36} color={COLORS.primary} />
           </View>
-        ) : null}
-
-        {/* EMAIL */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email Address</Text>
-          <View style={styles.inputWrap}>
-            <Ionicons name="mail-outline" size={17} color={COLORS.textMuted} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              placeholderTextColor={COLORS.textMuted}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-          </View>
+          <Text style={styles.appName}>Homecare Service Hub</Text>
+          <Text style={styles.appTagline}>Authorized Appliance Repairs & Warranty</Text>
         </View>
 
-        {/* PASSWORD */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.inputWrap}>
-            <Ionicons name="lock-closed-outline" size={17} color={COLORS.textMuted} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              placeholderTextColor={COLORS.textMuted}
-              secureTextEntry={!showPass}
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-              <Ionicons name={showPass ? 'eye-outline' : 'eye-off-outline'} size={17} color={COLORS.textMuted} />
-            </TouchableOpacity>
+        {/* LOGIN CARD */}
+        <View style={styles.card}>
+          <Text style={styles.cardHeading}>Sign In</Text>
+          <Text style={styles.cardSub}>Use your registered credentials to continue</Text>
+
+          {errorMsg ? (
+            <View style={styles.errorBox}>
+              <Ionicons name="warning-outline" size={16} color={COLORS.danger} />
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
+          ) : null}
+
+          {/* EMAIL */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email Address</Text>
+            <View style={styles.inputWrap}>
+              <Ionicons name="mail-outline" size={17} color={COLORS.textMuted} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor={COLORS.textMuted}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+            </View>
           </View>
+
+          {/* PASSWORD */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.inputWrap}>
+              <Ionicons name="lock-closed-outline" size={17} color={COLORS.textMuted} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor={COLORS.textMuted}
+                secureTextEntry={!showPass}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
+                <Ionicons name={showPass ? 'eye-outline' : 'eye-off-outline'} size={17} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
+            {loading ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <>
+                <Ionicons name="log-in-outline" size={20} color={COLORS.white} style={{ marginRight: 8 }} />
+                <Text style={styles.loginBtnText}>Sign In</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.divider} />
+            <Text style={styles.dividerText}>New here?</Text>
+            <View style={styles.divider} />
+          </View>
+
+          <TouchableOpacity
+            style={styles.registerBtn}
+            onPress={() => navigation.navigate('Register')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="person-add-outline" size={18} color={COLORS.primary} style={{ marginRight: 6 }} />
+            <Text style={styles.registerBtnText}>Create New Account</Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
-          {loading ? (
-            <ActivityIndicator color={COLORS.white} />
-          ) : (
-            <>
-              <Ionicons name="log-in-outline" size={18} color={COLORS.white} style={{ marginRight: 8 }} />
-              <Text style={styles.loginBtnText}>Sign In</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>New here?</Text>
-          <View style={styles.divider} />
+        {/* ROLE HINTS */}
+        <View style={styles.roleHints}>
+          {[
+            { icon: 'account-outline', label: 'Customer', color: COLORS.primary },
+            { icon: 'store-outline', label: 'Store Admin', color: COLORS.warning },
+            { icon: 'wrench-outline', label: 'Technician', color: COLORS.success },
+          ].map((r) => (
+            <View key={r.label} style={styles.roleHintChip}>
+              <MaterialCommunityIcons name={r.icon} size={16} color={r.color} />
+              <Text style={[styles.roleHintText, { color: r.color }]}>{r.label}</Text>
+            </View>
+          ))}
         </View>
-
-        <TouchableOpacity
-          style={styles.registerBtn}
-          onPress={() => navigation.navigate('Register')}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="person-add-outline" size={17} color={COLORS.primaryLight} style={{ marginRight: 6 }} />
-          <Text style={styles.registerBtnText}>Create New Account</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* ROLE HINTS */}
-      <View style={styles.roleHints}>
-        {[
-          { icon: 'account-outline', label: 'Customer', color: COLORS.primaryLight },
-          { icon: 'store-outline', label: 'Store Admin', color: COLORS.warningLight },
-          { icon: 'wrench-outline', label: 'Technician', color: COLORS.successLight },
-        ].map((r) => (
-          <View key={r.label} style={styles.roleHintChip}>
-            <MaterialCommunityIcons name={r.icon} size={16} color={r.color} />
-            <Text style={[styles.roleHintText, { color: r.color }]}>{r.label}</Text>
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+      </KeyboardAwareScrollView>
+    </SafeAreaView>
   );
 };
 
